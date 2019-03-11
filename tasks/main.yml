@@ -1,0 +1,52 @@
+- name: create download directory
+  file:
+    path: "{{ ngx_replace_filter_download_path }}"
+    state: directory
+
+- name: clone replace-filter-nginx-module bare repository
+  git:
+    repo: "{{ item.repo }}"
+    dest: "{{ ngx_replace_filter_download_path }}/{{ item.name }}.git"
+    bare: true
+    update: true
+  with_items:
+  - name: replace-filter-nginx-module
+    repo: "{{ ngx_replace_filter_repo }}"
+  - name: sregex
+    repo: "{{ ngx_replace_filter_sregex_repo }}"
+
+- name: recreate build directory
+  file:
+    path: "{{ ngx_replace_filter_build_path }}"
+    state: "{{ item }}"
+  with_items:
+  - absent
+  - directory
+
+- name: clone to build directory
+  git:
+    repo: "{{ ngx_replace_filter_download_path }}/{{ item.name }}.git"
+    dest: "{{ ngx_replace_filter_build_path }}/{{ item.name }}"
+    version: "{{ item.version }}"
+  with_items:
+  - name: replace-filter-nginx-module
+    version: "{{ ngx_replace_filter_git_version }}"
+  - name: sregex
+    version: "{{ ngx_replace_filter_sregex_git_version }}"
+
+- name: build sregex
+  command: make libsregex.a
+  args:
+    chdir: "{{ ngx_replace_filter_build_path }}/sregex"
+
+- name: patch replace-filter to set SREGEX_INC and SREGEX_LIB
+  lineinfile:
+    path: "{{ ngx_replace_filter_build_path }}/replace-filter-nginx-module/config"
+    line: |
+      SREGEX_INC="{{ ngx_replace_filter_build_path }}/sregex/src"
+      SREGEX_LIB="{{ ngx_replace_filter_build_path }}/sregex"
+    insertbefore: BOF
+
+- name: export openresty_module_path
+  set_fact:
+    openresty_module_path: "{{ openresty_module_path|default({})|combine({module_name: ngx_replace_filter_build_path  + '/replace-filter-nginx-module'})}}"
