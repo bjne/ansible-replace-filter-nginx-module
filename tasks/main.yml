@@ -1,3 +1,8 @@
+- name: install build dependences
+  apt:
+    pkg: "{{ ngx_replace_filter_build_dependencies }}"
+    state: present
+
 - name: create download directory
   file:
     path: "{{ ngx_replace_filter_download_path }}"

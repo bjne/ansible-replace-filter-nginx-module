@@ -1,3 +1,6 @@
+ngx_replace_filter_build_dependencies:
+- build-essential
+- bison
 ngx_replace_filter_download_path: "{{ download_path|default('/usr/src') }}/ngx_replace_filter/download"
 ngx_replace_filter_build_path: "{{ build_path|default('/usr/src') }}/ngx_replace_filter/build"
 ngx_replace_filter_repo: "https://github.com/openresty/replace-filter-nginx-module"
